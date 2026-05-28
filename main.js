@@ -305,33 +305,67 @@
       audio.src = music.file;
     }
 
-    button.addEventListener("click", function () {
-      if (!music.ready) {
-        toast(music.placeholderMessage || "配乐暂未启用");
-        return;
+    function markPlaying() {
+      button.classList.add("playing");
+      button.setAttribute("aria-label", "暂停背景音乐");
+      if (label) {
+        label.textContent = "暂停";
       }
-      if (audio.paused) {
-        audio
-          .play()
-          .then(function () {
-            button.classList.add("playing");
-            button.setAttribute("aria-label", "暂停背景音乐");
-            if (label) {
-              label.textContent = "暂停";
-            }
-          })
-          .catch(function () {
+    }
+
+    function markPaused() {
+      button.classList.remove("playing");
+      button.setAttribute("aria-label", "开启背景音乐");
+      if (label) {
+        label.textContent = "配乐";
+      }
+    }
+
+    function tryPlayMusic(showFailure) {
+      if (!music.ready) {
+        if (showFailure) {
+          toast(music.placeholderMessage || "配乐暂未启用");
+        }
+        return Promise.resolve(false);
+      }
+      if (!audio.paused) {
+        markPlaying();
+        return Promise.resolve(true);
+      }
+      return audio
+        .play()
+        .then(function () {
+          markPlaying();
+          return true;
+        })
+        .catch(function () {
+          if (showFailure) {
             toast("当前浏览器未能播放配乐");
-          });
+          }
+          return false;
+        });
+    }
+
+    button.addEventListener("click", function (event) {
+      event.stopPropagation();
+      if (audio.paused) {
+        tryPlayMusic(true);
       } else {
         audio.pause();
-        button.classList.remove("playing");
-        button.setAttribute("aria-label", "开启背景音乐");
-        if (label) {
-          label.textContent = "配乐";
-        }
+        markPaused();
       }
     });
+
+    document.addEventListener(
+      "pointerdown",
+      function (event) {
+        if (button.contains(event.target)) {
+          return;
+        }
+        tryPlayMusic(false);
+      },
+      { once: true, passive: true }
+    );
 
     audio.addEventListener("error", function () {
       if (music.ready) {
