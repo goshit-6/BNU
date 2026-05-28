@@ -19,7 +19,7 @@
       advisors: "https://sss.bnu.edu.cn/yjszsztw/"
     },
     music: {
-      ready: false,
+      ready: true,
       file: "./assets/music.mp3",
       placeholderMessage: "配乐将在正式素材确认后启用"
     },
